@@ -145,7 +145,7 @@ stat.Regions &lt;- read.csv(fileURL, sep = &#39;;&#39;, dec = &#39;,&#39;, strin
 #  читаем ShapeFile из папки, с указанием уровня
 Regions &lt;- readOGR(dsn = &#39;./data&#39;,   # папка с файлами .shp,...
                    layer = &#39;RUS_adm1&#39;)           # уровень иерархии</code></pre>
-<p>OGR data source with driver: ESRI Shapefile Source: “D:папка”, layer: “RUS_adm1” with 85 features It has 12 fields Integer64 fields read as strings: ID_0 ID_1 CCN_1</p>
+<p>OGR data source with driver: ESRI Shapefile Source: “D:”, layer: “RUS_adm1” with 85 features It has 12 fields Integer64 fields read as strings: ID_0 ID_1 CCN_1</p>
 <pre class="r"><code># делаем фактор из имён областей (т.е. нумеруем их)
 Regions@data$VARNAME_1 &lt;- as.factor(Regions@data$VARNAME_1 )
 stat.Regions$VARNAME_1 &lt;- stat.Regions$region_Eng
@@ -184,7 +184,7 @@ gp &lt;- ggplot() +
     geom_path(data = Regions.df, 
               aes(long, lat, group = group),
               color = &#39;coral4&#39;) +
-    coord_map(projection = &#39;gilbert&#39;) +
+    coord_map(projection = &#39;gilbert&#39;, orientation = c(90, 0, 100)) +
     scale_fill_distiller(palette = &#39;OrRd&#39;,
                          direction = 1,
                          breaks = pretty_breaks(n = 5)) +

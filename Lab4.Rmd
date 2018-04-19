@@ -62,7 +62,7 @@ gp <- ggplot() +
     geom_path(data = Regions.df, 
               aes(long, lat, group = group),
               color = 'coral4') +
-    coord_map(projection = 'gilbert') +
+    coord_map(projection = 'gilbert', orientation = c(90, 0, 100)) +
     scale_fill_distiller(palette = 'OrRd',
                          direction = 1,
                          breaks = pretty_breaks(n = 5)) +
