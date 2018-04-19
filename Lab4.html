@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+
+
+<meta name="author" content="Zhuravlev" />
+
+
+<title>Lab4</title>
+
+<script src="Lab4_files/jquery-1.11.3/jquery.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="Lab4_files/bootstrap-3.3.5/css/bootstrap.min.css" rel="stylesheet" />
+<script src="Lab4_files/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="Lab4_files/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="Lab4_files/bootstrap-3.3.5/shim/respond.min.js"></script>
+<script src="Lab4_files/navigation-1.1/tabsets.js"></script>
+<link href="Lab4_files/highlightjs-1.1/default.css" rel="stylesheet" />
+<script src="Lab4_files/highlightjs-1.1/highlight.js"></script>
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css">
+  pre:not([class]) {
+    background-color: white;
+  }
+</style>
+<script type="text/javascript">
+if (window.hljs && document.readyState && document.readyState === "complete") {
+   window.setTimeout(function() {
+      hljs.initHighlighting();
+   }, 0);
+}
+</script>
+
+
+
+<style type="text/css">
+h1 {
+  font-size: 34px;
+}
+h1.title {
+  font-size: 38px;
+}
+h2 {
+  font-size: 30px;
+}
+h3 {
+  font-size: 24px;
+}
+h4 {
+  font-size: 18px;
+}
+h5 {
+  font-size: 16px;
+}
+h6 {
+  font-size: 12px;
+}
+.table th:not([align]) {
+  text-align: left;
+}
+</style>
+
+
+</head>
+
+<body>
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+code {
+  color: inherit;
+  background-color: rgba(0, 0, 0, 0.04);
+}
+img {
+  max-width:100%;
+  height: auto;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+</style>
+
+
+
+<div class="container-fluid main-container">
+
+<!-- tabsets -->
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+</script>
+
+<!-- code folding -->
+
+
+
+
+
+
+<div class="fluid-row" id="header">
+
+
+
+<h1 class="title toc-ignore">Lab4</h1>
+<h4 class="author"><em>Zhuravlev</em></h4>
+<h4 class="date"><em>20 Апрель, 2018</em></h4>
+
+</div>
+
+
+<pre class="r"><code>library(&#39;R.utils&#39;)</code></pre>
+<pre><code>## Warning: package &#39;R.utils&#39; was built under R version 3.3.3</code></pre>
+<pre class="r"><code>library(&#39;maptools&#39;)</code></pre>
+<pre><code>## Warning: package &#39;maptools&#39; was built under R version 3.3.3</code></pre>
+<pre><code>## Warning: package &#39;sp&#39; was built under R version 3.3.3</code></pre>
+<pre class="r"><code>require(&#39;rgdal&#39;) </code></pre>
+<pre><code>## Warning: package &#39;rgdal&#39; was built under R version 3.3.3</code></pre>
+<pre class="r"><code>require(&#39;plyr&#39;)   
+library(&#39;scales&#39;)
+library(&#39;ggplot2&#39;)
+library(&#39;gpclib&#39;)
+library(&#39;mapproj&#39;)</code></pre>
+<pre><code>## Warning: package &#39;mapproj&#39; was built under R version 3.3.3</code></pre>
+<pre><code>## Warning: package &#39;maps&#39; was built under R version 3.3.3</code></pre>
+<pre class="r"><code>#ссылка на данные: http://www.gks.ru/bgd/regl/B16_14p/IssWWW.exe/Stg/d01/05-26.doc
+
+fileURL &lt;- &#39;data_gks4_2.csv&#39;
+stat.Regions &lt;- read.csv(fileURL, sep = &#39;;&#39;, dec = &#39;,&#39;, stringsAsFactors = F, encoding = &#39;UTF-8&#39;)
+
+#  читаем ShapeFile из папки, с указанием уровня
+Regions &lt;- readOGR(dsn = &#39;./data&#39;,   # папка с файлами .shp,...
+                   layer = &#39;RUS_adm1&#39;)           # уровень иерархии</code></pre>
+<p>OGR data source with driver: ESRI Shapefile Source: “D:папка”, layer: “RUS_adm1” with 85 features It has 12 fields Integer64 fields read as strings: ID_0 ID_1 CCN_1</p>
+<pre class="r"><code># делаем фактор из имён областей (т.е. нумеруем их)
+Regions@data$VARNAME_1 &lt;- as.factor(Regions@data$VARNAME_1 )
+stat.Regions$VARNAME_1 &lt;- stat.Regions$region_Eng
+Regions@data &lt;- join(Regions@data, stat.Regions[, c(&#39;VARNAME_1&#39;,
+                                                    &#39;znach&#39;)],
+                     by = &#39;VARNAME_1&#39;)
+
+# преобразовать SpatialPolygonsDataFrame в data.frame
+gpclibPermit()</code></pre>
+<pre><code>## Warning in gpclibPermit(): support for gpclib will be withdrawn from
+## maptools at the next major release</code></pre>
+<p>[1] TRUE</p>
+<pre class="r"><code>Regions.points &lt;- fortify(Regions, region = &#39;VARNAME_1&#39;)
+# добавить к координатам сведения о регионах
+Regions@data$id &lt;- Regions@data$VARNAME_1
+Regions.df &lt;- join(Regions.points, Regions@data, by = &#39;id&#39;)
+# добавляем к координатам значения показателя для заливки
+#  (численность населения из фрейма stat.Regions)
+stat.Regions$id &lt;- stat.Regions$region_Eng
+
+# координаты центров полигонов (для подписей регионов)
+centroids.df &lt;- as.data.frame(coordinates(Regions))
+# названия регионов (идут в том же порядке, в каком
+# считались центроиды
+centroids.df$id &lt;- Regions@data$ID_1
+# заменяем имена переменных, созданные по умолчанию
+colnames(centroids.df) &lt;- c(&#39;long&#39;, &#39;lat&#39;, &#39;id&#39;)
+
+Regions.df &lt;- join(Regions.df, 
+                   stat.Regions[, c(&#39;id&#39;, &#39;znach&#39;)], 
+                   by = &#39;id&#39;)
+# создаём график
+gp &lt;- ggplot() + 
+    geom_polygon(data = Regions.df, 
+                 aes(long, lat, group = group, fill = znach)) +
+    geom_path(data = Regions.df, 
+              aes(long, lat, group = group),
+              color = &#39;coral4&#39;) +
+    coord_map(projection = &#39;gilbert&#39;) +
+    scale_fill_distiller(palette = &#39;OrRd&#39;,
+                         direction = 1,
+                         breaks = pretty_breaks(n = 5)) +
+    labs(x = &#39;Долгота&#39;, y = &#39;Широта&#39;, 
+         title = &quot;ВЫПУСК БАКАЛАВРОВ, СПЕЦИАЛИСТОВ, МАГИСТРОВ(тысяч человек)&quot;) #+
+    #geom_text(data = centroids.df, 
+    #                   aes(long, lat, label = id))
+# выводим график
+gp</code></pre>
+<p><img src="Lab4_files/figure-html/a-1.png" width="672" /></p>
+
+
+
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.header').parent('thead').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
